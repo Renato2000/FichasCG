@@ -31,7 +31,7 @@ typedef struct cameraExplorer{
 typedef struct player{
 	PONTO pos;
 	CAMERAEXPLORER cameraExplorer;
-		PONTO looking;
+	PONTO looking;
 	bool cameraModeExplorer;
 } *PLAYER;
 
