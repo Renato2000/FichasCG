@@ -32,7 +32,6 @@ typedef struct player{
 	PONTO pos;
 	CAMERAEXPLORER cameraExplorer;
 	PONTO looking;
-	bool cameraModeExplorer;
 } *PLAYER;
 
 CILINDRO _cilindro = NULL;
@@ -142,16 +141,9 @@ void renderScene(void) {
 
     // set the camera
     glLoadIdentity();
-	if(_player -> cameraModeExplorer){
     	gluLookAt(_player -> pos -> x, _player -> pos -> y, _player -> pos -> z,
             0.0,0.0,0.0,
             0.0f,1.0f,0.0f);
-	}
-	else{
-		gluLookAt(_player -> pos -> x, _player -> pos -> y, _player -> pos -> z,
-            _player -> looking -> x, _player -> looking -> y, _player -> looking -> z,
-            0.0f,1.0f,0.0f);
-	}
 
 
 	// Desenha os eixos
@@ -199,10 +191,9 @@ void renderScene(void) {
 
 void recenterPlayer(){
 	_player -> pos -> x = _player -> cameraExplorer -> distance * sin(_player -> cameraExplorer -> angleX) * cos(_player -> cameraExplorer -> angleY) ; 
-	if((_player -> cameraExplorer -> angleY >= M_PI / 2 && _player -> cameraExplorer -> angleY <= 3 * M_PI / 2) || (_player -> cameraExplorer -> angleY <= - M_PI / 2 && _player -> cameraExplorer -> angleY >= - 3 * M_PI / 2))
-		_player -> pos -> y = - _player -> cameraExplorer -> distance * sin(_player -> cameraExplorer -> angleY);
-	else 
-		_player -> pos -> y = _player -> cameraExplorer -> distance * sin(_player -> cameraExplorer -> angleY);
+
+	_player -> pos -> y = _player -> cameraExplorer -> distance * sin(_player -> cameraExplorer -> angleY);
+
 	_player -> pos -> z = _player -> cameraExplorer -> distance * cos(_player -> cameraExplorer -> angleX) * cos(_player -> cameraExplorer -> angleY); 		
 
 }
@@ -211,70 +202,39 @@ void recenterPlayer(){
 void keyEvent(unsigned char key, int x, int y){
 	switch(key){
 		case 'w':
-			if(_player -> cameraModeExplorer){
-				_player -> cameraExplorer -> angleY += M_PI / 90;
-				if(_player -> cameraExplorer -> angleY > 2 * M_PI) _player -> cameraExplorer -> angleY -= 2 * M_PI;
-				recenterPlayer();
-			}
-			else{
- 				_player -> looking -> x = 1 + _player -> pos -> x;
-			}
+			_player -> cameraExplorer -> angleY += M_PI / 90;
+			if(_player -> cameraExplorer -> angleY > 1.5f) _player -> cameraExplorer -> angleY = 1.5f;
+			recenterPlayer();
 			glutPostRedisplay();
 			break;
 		case 's':
-			if(_player -> cameraModeExplorer){
-				_player -> cameraExplorer -> angleY -= M_PI / 90;
-				if(_player -> cameraExplorer -> angleY > 2 * M_PI) _player -> cameraExplorer -> angleY -= 2 * M_PI;
-				recenterPlayer();
-			}
-			else{
-				 _player -> looking -> x = 1 - _player -> pos -> x;
-			}
+			_player -> cameraExplorer -> angleY -= M_PI / 90;
+			if(_player -> cameraExplorer -> angleY < - 1.5f) _player -> cameraExplorer -> angleY = -1.5f;
+			recenterPlayer();
 			glutPostRedisplay();
 			break;
 		case 'a':
-			if(_player -> cameraModeExplorer){
- 				_player -> cameraExplorer -> angleX += M_PI / 90;
-				recenterPlayer();
-			}
-			else  _player -> looking -> z = 1 + _player -> pos -> z;
+ 			_player -> cameraExplorer -> angleX += M_PI / 90;
 			glutPostRedisplay();
 			break;
 		case 'd':
-			if(_player -> cameraModeExplorer){
-				_player -> cameraExplorer -> angleX -= M_PI / 90;
-				recenterPlayer();
-			} 
-			else _player -> looking -> z = 1 - _player -> pos -> z;
+			_player -> cameraExplorer -> angleX -= M_PI / 90;
+			recenterPlayer();
 			glutPostRedisplay();
 			break;
 		case '+':
-			if(_player -> cameraModeExplorer){
-				_player -> cameraExplorer -> distance += 1;
-				recenterPlayer();
-			}
-			else _player -> looking -> y = 1 + _player -> pos -> y;
+			_player -> cameraExplorer -> distance += 1;
+			recenterPlayer();
 			glutPostRedisplay();
 			break;
 		case '-':
-			if(_player -> cameraModeExplorer){
-				_player -> cameraExplorer -> distance -= 1;
-				recenterPlayer();
-			}
-			else _player -> looking -> y = 1 - _player -> pos -> y;
+			_player -> cameraExplorer -> distance -= 1;
+			recenterPlayer();
 			glutPostRedisplay();
 			break;
 		case 'm':
 			if(_drawMode == GL_FILL) _drawMode = GL_LINE;
 			else if(_drawMode == GL_LINE) _drawMode = GL_FILL;
-			glutPostRedisplay();
-			break;
-		case 'c':
-			_player -> cameraModeExplorer = !(_player -> cameraModeExplorer);
-			if(_player -> cameraModeExplorer){
-				_player -> looking -> x = _player -> looking -> y = _player -> looking -> z = 0;
-				_player -> cameraExplorer -> distance = _player -> pos -> y / sin(_player -> cameraExplorer -> angleY);
-			} 
 			glutPostRedisplay();
 			break;
 		default:
@@ -301,7 +261,6 @@ void startStructures(){
 	looking -> y = 0;
 	looking -> z = 0;
 	_player -> looking = looking;
-	_player -> cameraModeExplorer = true;
 	recenterPlayer();
 
 	static std::list<PONTO> pontos = geraPontosCilindro(_slices, _altura, _raio);
