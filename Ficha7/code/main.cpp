@@ -21,10 +21,10 @@ GLuint buffers[1];
 int imageWidth, imageHeight;
 
 float camLx = 00, camLy = 00, camLz = 00;
-float camX = 00, camY = 30, camZ = 40;
+float camPx = 00, camPy = 30, camPz = 40;
+float camHeight = 2, camSpeed = 1;
 int startX, startY, tracking = 0;
-
-int alpha = 0, beta = 45, r = 50;
+int camAlpha = 0, camBeta = 0, camR = 50;
 
 typedef struct ponto{
 	float x, y, z;
@@ -42,6 +42,46 @@ float factor = 0;
 float velocidade = 1;
 std::vector<PONTO> pontosArvores;
 unsigned char *imageData;
+
+
+void normalizeCamera(){
+    double fator = sqrt(pow(camLx,2) + pow(camLy,2) + pow(camLz,2));
+
+	camLx = camLx / fator;
+	camLy = camLy / fator;
+	camLz = camLz / fator;
+}
+
+PONTO cross(PONTO v1, PONTO v2){
+	PONTO ret = (PONTO) malloc(sizeof(PONTO));
+
+	ret->x = v1->y * v2->z - v1->z * v2->y;
+	ret->y = v1->x * v2->z - v1->z * v2->x;
+	ret->z = v1->x * v2->y - v1->y * v2->x;
+
+    return ret;
+}
+
+
+float h(int x, int z){
+
+	return imageData[z * imageWidth + x]; 
+}
+
+float hf(float px, float pz){
+	int x1, x2, z1, z2;
+
+	x1 = floor(px + imageHeight/2); x2 = x1 + 1;
+	z1 = floor(pz + imageHeight/2); z2 = z1 + 1;
+
+	float fx = px - x1  + imageHeight/2;
+	float fz = pz - z1  + imageHeight/2;
+
+	float h_x1_z  = h(x1,z1) * (1-fz) + h(x1,z2) * fz;
+	float h_x2_z  = h(x2,z1) * (1-fz) + h(x2,z2) * fz;
+
+	return h_x1_z * (1 - fx) + h_x2_z * fx;
+}
 
 void changeSize(int w, int h) {
 
@@ -101,7 +141,7 @@ void drawCowboys(){
 		float z = rc * cos(alpha);
 
 		glPushMatrix();		
-    	glTranslatef(x, 1, z);
+    	glTranslatef(x, hf(x, z), z);
 		glRotatef((alpha / (2 * M_PI)) * 360 - 90, 0, 1, 0);
     	glutSolidTeapot(1.5);
     	glPopMatrix();
@@ -117,7 +157,7 @@ void drawIndios(){
 		float z = ri * cos(alpha);
 
 		glPushMatrix();		
-    	glTranslatef(x, 1, z);
+    	glTranslatef(x, hf(x, z), z);
 		glRotatef((alpha / (2 * M_PI)) * 360, 0, 1, 0);
     	glutSolidTeapot(1.5);
     	glPopMatrix();
@@ -153,8 +193,8 @@ void renderScene(void) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glLoadIdentity();
-	gluLookAt(camX, camY, camZ, 
-		      0.0,0.0,0.0,
+	gluLookAt(camPx, camPy, camPz, 
+		      camLx, camLy, camLz,
 			  0.0f,1.0f,0.0f);
 
 	drawScene();
@@ -167,27 +207,95 @@ void renderScene(void) {
 }
 
 void processKeys(unsigned char key, int xx, int yy) {
+	float dx, dy, dz;
+	float rx, ry, rz;
+	float alturaAnterior;
 
 // put code to process regular keys in here
-	switch (key) {
-	case '+':
-		r += 1;
+	switch(key) {
+		case 'w':
+			dx = camLx - camPx;
+			dy = 0;
+			dz = camLz - camPz;
 
-		camX = r * sin(alpha * 3.14 / 180.0) * cos(beta * 3.14 / 180.0);
-		camZ = r * cos(alpha * 3.14 / 180.0) * cos(beta * 3.14 / 180.0);
-		camY = r * 							   sin(beta * 3.14 / 180.0);
+			alturaAnterior = camPy;
 
-		break;
-	case '-':
-		r = r == 0 ? 0 : r - 1;
+			camPx = camPx + camSpeed * dx;
+			camPz = camPz + camSpeed * dz;
+			camPy = camHeight + hf(camPx, camPz);
 
-		camX = r * sin(alpha * 3.14 / 180.0) * cos(beta * 3.14 / 180.0);
-		camZ = r * cos(alpha * 3.14 / 180.0) * cos(beta * 3.14 / 180.0);
-		camY = r * 							   sin(beta * 3.14 / 180.0);
-		
-		break;
-	default:
-		break;
+			camLx = camLx + camSpeed * dx;
+			camLy = camLy + camPy - alturaAnterior;
+			camLz = camLz + camSpeed * dz;
+
+			//normalizeCamera();
+
+			break;
+		case 'a':
+			dx = camLx - camPx;
+			dy = 0;
+			dz = camLz - camPz;
+
+			alturaAnterior = camPy;
+
+			rx = 1.0f * dz - 0.0f * dy;
+			ry = 0.0f * dz - 0.0f * dx;
+			rz = 0.0f * dy - 1.0f * dx;
+
+			camPx = camPx + camSpeed * rx;
+			camPz = camPz + camSpeed * rz;
+			camPy = camHeight + hf(camPx, camPz);
+
+			camLx = camLx + camSpeed * rx;
+			camLy = camLy + camPy - alturaAnterior;
+			camLz = camLz + camSpeed * rz;
+
+			//normalizeCamera();
+
+			break;
+		case 's':
+			dx = camPx - camLx;
+			dy = 0;
+			dz = camPz - camLz;
+
+			alturaAnterior = camPy;
+
+			camPx = camPx + camSpeed * dx;
+			camPz = camPz + camSpeed * dz;
+			camPy = camHeight + hf(camPx, camPz);
+
+			camLx = camLx + camSpeed * dx;
+			camLy = camLy + camPy - alturaAnterior;
+			camLz = camLz + camSpeed * dz;
+
+			//normalizeCamera();
+
+			break;
+		case 'd':
+			dx = camLx - camPx;
+			dy = 0;
+			dz = camLz - camPz;
+
+			rx = dy * 0.0f - dz * 1.0f;
+			ry = dx * 0.0f - dz * 0.0f;
+			rz = dx * 1.0f - dy * 0.0f;
+
+			alturaAnterior = camPy;
+
+			camPx = camPx + camSpeed * rx;
+			camPz = camPz + camSpeed * rz;
+			camPy = camHeight + hf(camPx, camPz);
+
+			camLx = camLx + camSpeed * rx;
+			camLy = camLy + camPy - alturaAnterior;
+			camLz = camLz + camSpeed * rz;
+
+			//normalizeCamera();
+
+			break;
+		default:
+			int i = 0;
+			break;
 	}
 }
 
@@ -207,14 +315,14 @@ void processMouseButtons(int button, int state, int xx, int yy) {
 	}
 	else if (state == GLUT_UP) {
 		if (tracking == 1) {
-			alpha += (xx - startX);
-			beta += (yy - startY);
+			camAlpha += (xx - startX);
+			camBeta += (yy - startY);
 		}
 		else if (tracking == 2) {
 			
-			r -= yy - startY;
-			if (r < 3)
-				r = 3.0;
+			camR -= yy - startY;
+			if (camR < 3)
+				camR = 3.0;
 		}
 		tracking = 0;
 	}
@@ -236,49 +344,34 @@ void processMouseMotion(int xx, int yy) {
 	if (tracking == 1) {
 
 
-		alphaAux = alpha + deltaX;
-		betaAux = beta + deltaY;
+		alphaAux = camAlpha + deltaX;
+		betaAux = camBeta + deltaY;
 
 		if (betaAux > 85.0)
 			betaAux = 85.0;
-		else if (betaAux < -85.0)
+		else if (betaAux <	-85.0)
 			betaAux = -85.0;
 
-		rAux = r;
+		rAux = camR;
 	}
 	else if (tracking == 2) {
 
-		alphaAux = alpha;
-		betaAux = beta;
-		rAux = r - deltaY;
+		alphaAux = camAlpha;
+		betaAux = camBeta;
+		rAux = camR - deltaY;
 		if (rAux < 3)
 			rAux = 3;
 	}
-	camX = rAux * sin(alphaAux * 3.14 / 180.0) * cos(betaAux * 3.14 / 180.0);
-	camZ = rAux * cos(alphaAux * 3.14 / 180.0) * cos(betaAux * 3.14 / 180.0);
-	camY = rAux * 							     sin(betaAux * 3.14 / 180.0);
+	float lx = cos(alphaAux * 3.14 / 180.0);
+	float ly = -sin(betaAux * 3.14 / 180.0);
+	float lz = sin(alphaAux * 3.14 / 180.0);
+
+	camLx = camPx + lx;
+	camLy = camPy + ly;
+	camLz = camPz + lz;
+
+	printf("%f %f %f\n", camLx, camLy, camLz);
 }
-
-float h(int x, int z){
-
-	return imageData[z * imageWidth + x]; 
-}
-
-float hf(float px, float pz){
-	int x1, x2, z1, z2;
-
-	x1 = floor(px); x2 = x1 + 1;
-	z1 = floor(pz); z2 = z1 + 1;
-
-	float fx = px - x1;
-	float fz = pz - z1;
-
-	float h_x1_z  = h(x1,z1) * (1-fz) + h(x1,z2) * fz;
-	float h_x2_z  = h(x2,z1) * (1-fz) + h(x2,z2) * fz;
-
-	return h_x1_z * (1 - fx) + h_x2_z * fx;
-}
-
 
 std::vector<PONTO> generateTreesRand(){
 	std::vector<PONTO> pontos;
@@ -289,7 +382,7 @@ std::vector<PONTO> generateTreesRand(){
 			p->x = rand() % imageWidth - (imageWidth/2); 
 			p->z = rand() % imageHeight - (imageHeight/2);
 		} while(sqrt(pow(p->x,2) + pow(p->z,2)) < rt);
-		p->y = hf(p->x + imageHeight/2, p->z + imageWidth/2);
+		p->y = hf(p->x, p->z);
 		pontos.emplace_back(p);
 	}
 
@@ -338,8 +431,17 @@ void init() {
 	pontosArvores = generateTreesRand();
 
 // 	OpenGL settings
-	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_CULL_FACE);
+	//glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+
+	camPx = 0;
+	camPz = 0;
+	camPy = camHeight + hf(camPx, camPz);
+	
+	camLx = 0;
+	camLz = 1;
+	camLy = camHeight + hf(camPx, camPz);
+		
 }
 
 
