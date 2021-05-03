@@ -79,8 +79,6 @@ void getCatmullRomPoint(float t, float *p0, float *p1, float *p2, float *p3, flo
 						{-0.5f,  0.0f,  0.5f,  0.0f},
 						{ 0.0f,  1.0f,  0.0f,  0.0f}};
 
-	//float pp[4] = []
-
 	float* maux = (float*) malloc(4 * 4 *sizeof(float));
 	for(int i = 0; i < 4; i++){
 		for(int j = 0; j < 4; j++){
