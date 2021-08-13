@@ -1,0 +1,3 @@
+/home/renato/Universidade/CG/FichasCG/Ficha12/build/CMakeFiles/rebuild_cache.dir
+/home/renato/Universidade/CG/FichasCG/Ficha12/build/CMakeFiles/edit_cache.dir
+/home/renato/Universidade/CG/FichasCG/Ficha12/build/CMakeFiles/class13.dir

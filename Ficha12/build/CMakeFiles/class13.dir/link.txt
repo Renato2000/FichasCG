@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/class13.dir/main.cpp.o  -o class13  -lGL -lGLU -lglut -lXi 

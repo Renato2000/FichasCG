@@ -304,7 +304,8 @@ void drawScene() {
 	// move teapots up so that they are placed on top of the ground plane
 	glTranslatef(0.0,1.0,0.0);
 	drawCowboys();
-	drawIndios();
+	drawIndios();	
+
 	glPopMatrix();
 }
 
